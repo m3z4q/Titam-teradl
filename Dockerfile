@@ -1,22 +1,22 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache unzip
+RUN apk add --no-cache unzip findutils
 
 WORKDIR /app
 
 COPY terabox-api.zip /app/
 
-# ZIP extract karo - files ek folder mein hain, unhe bahar nikaalo
-RUN unzip -o terabox-api.zip -d /tmp/ && \
-    # Check karo ki ZIP ke andar folder hai ya nahi
-    if [ -d "/tmp/terabox-api" ]; then \
-        cp -r /tmp/terabox-api/* /app/; \
-    else \
-        cp -r /tmp/* /app/; \
-    fi && \
-    rm -rf /tmp/terabox-api.zip /tmp/terabox-api
+RUN unzip -o terabox-api.zip && \
+    rm -f terabox-api.zip && \
+    # Agar koi folder bana hai (jaise terabox-api/) toh uske contents ko /app mein lao
+    if [ "$(ls -d */ 2>/dev/null)" ]; then \
+        for dir in */; do \
+            if [ "$dir" != "node_modules/" ]; then \
+                cd "$dir" && cp -r . .. && cd .. && rm -rf "$dir"; \
+            fi; \
+        done; \
+    fi
 
-# Ab package.json mil jayega
 RUN npm install --omit=dev && npm cache clean --force
 
 RUN addgroup -g 1001 -S nodejs && \
