@@ -5,18 +5,17 @@ RUN apk add --no-cache unzip
 
 WORKDIR /app
 
-# Agar ZIP file hai toh pehle extract karo
+# Agar ZIP file hai toh extract karo
 COPY terabox-api.zip /app/
-RUN unzip -o terabox-api.zip -d /app/ && rm terabox-api.zip
+RUN unzip -o terabox-api.zip -d /app/ && rm -f terabox-api.zip
 
-# Copy package.json (agar ZIP ke andar nahi hai toh fallback)
-COPY package*.json ./
+# COPY package*.json ./    ← ISE HATAA DO
+# RUN npm ci --only=production && npm cache clean --force    ← ISE BADLO
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# ✅ Direct npm install use karo (package-lock.json ki zaroorat nahi)
+RUN npm install --omit=dev && npm cache clean --force
 
-# Copy remaining code (agar ZIP ne nahi kiya toh)
-COPY . .
+# COPY . .    ← ISE BHI HATAA DO (ZIP ne sab extract kar diya)
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
